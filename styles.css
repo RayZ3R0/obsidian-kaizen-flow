@@ -1,0 +1,139 @@
+/* Kaizen Plugin Styles */
+
+.kaizen-view-container {
+    padding: 20px;
+    height: 100%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.kaizen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.kaizen-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.kaizen-tab-button {
+    padding: 8px 16px;
+    border-radius: 4px;
+    background-color: var(--background-secondary);
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+}
+
+.kaizen-tab-button.active {
+    background-color: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.kaizen-task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.kaizen-task-card {
+    background-color: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: transform 0.1s ease;
+}
+
+.kaizen-task-card.completed {
+    opacity: 0.6;
+    background-color: var(--background-secondary);
+    border-color: var(--background-modifier-border);
+}
+
+.kaizen-task-card:hover {
+    border-color: var(--interactive-accent);
+}
+
+/* Wider Modal */
+.kaizen-modal {
+    width: 600px !important;
+    max-width: 90vw !important;
+}
+
+@media (min-width: 1000px) {
+    .kaizen-modal {
+        width: 800px !important;
+    }
+}
+
+.kaizen-urgency-badge {
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.8em;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+/* Urgency Colors */
+.urgency-crisis {
+    background-color: rgba(255, 0, 0, 0.2);
+    color: #ff4d4d;
+    border: 1px solid #ff4d4d;
+    animation: pulse 2s infinite;
+}
+
+.urgency-due-today {
+    background-color: rgba(255, 165, 0, 0.2);
+    color: orange;
+    border: 1px solid orange;
+}
+
+.urgency-do-now {
+    background-color: rgba(0, 255, 0, 0.1);
+    color: #4caf50;
+    border: 1px solid #4caf50;
+}
+
+.urgency-chill {
+    background-color: rgba(0, 0, 255, 0.1);
+    color: #2196f3;
+    border: 1px solid #2196f3;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 77, 0.4);
+    }
+
+    70% {
+        box-shadow: 0 0 0 10px rgba(255, 77, 77, 0);
+    }
+
+    100% {
+        box-shadow: 0 0 0 0 rgba(255, 77, 77, 0);
+    }
+}
+
+/* Modal Styles */
+.kaizen-subtask-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 8px;
+    align-items: center;
+}
+
+.kaizen-subtask-input {
+    flex: 2;
+}
+
+.kaizen-lead-days-input {
+    width: 80px;
+}

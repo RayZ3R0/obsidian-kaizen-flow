@@ -1,0 +1,18 @@
+
+# Dependencies
+node_modules/
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+main.js
+*.map
+
+# Editor settings
+.idea/
+.vscode/
+
+# Vault-specific (if testing inside a vault)
+.obsidian/
