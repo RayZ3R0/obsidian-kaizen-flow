@@ -1,7 +1,7 @@
 {
     "id": "kaizen-adhd",
     "name": "Kaizen ADHD",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "minAppVersion": "0.15.0",
     "description": "A high-performance project management timeline creator for the ADHD brain.",
     "author": "RayZ3R0",

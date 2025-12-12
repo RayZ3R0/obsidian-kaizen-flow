@@ -10,7 +10,7 @@ export interface UrgencyStatus {
 
 export class UrgencyCalculator {
     public static calculate(deadline: string | null, planDate: string | null): UrgencyStatus {
-        const today = DateTime.now().startOf('day');
+        const now = DateTime.now();
 
         // If no deadline, check plan date. If neither, it's chill.
         if (!deadline && !planDate) {
@@ -19,40 +19,45 @@ export class UrgencyCalculator {
 
         let deadlineDiff = 999;
         if (deadline) {
-            const d = DateTime.fromISO(deadline).startOf('day');
+            const d = DateTime.fromISO(deadline);
             if (d.isValid) {
-                deadlineDiff = d.diff(today, 'days').days;
+                // Precise diff in days (float)
+                deadlineDiff = d.diff(now, 'days').days;
             }
         }
 
         let planDiff = 999;
         if (planDate) {
-            const p = DateTime.fromISO(planDate).startOf('day');
+            const p = DateTime.fromISO(planDate);
             if (p.isValid) {
-                planDiff = p.diff(today, 'days').days;
+                planDiff = p.diff(now, 'days').days;
             }
         }
 
-        // 1. CRISIS: Deadline is today or recently passed
-        if (deadlineDiff <= 0) {
-            if (deadlineDiff < 0) {
-                return { level: 'CRISIS', label: `Overdue ${Math.abs(deadlineDiff)}d`, score: 100 };
-            }
-            return { level: 'DUE_TODAY', label: 'Due Today', score: 90 };
+        // 1. CRISIS: Deadline passed
+        if (deadlineDiff < 0) {
+            return { level: 'CRISIS', label: `Overdue`, score: 100 };
         }
 
-        // 2. DO NOW: Planned start date is today or passed
+        // 2. DUE SOON (Within 24 hours)
+        if (deadlineDiff <= 1) {
+            // Calculate hours/minutes for label
+            const hours = Math.ceil(deadlineDiff * 24);
+            return { level: 'DUE_TODAY', label: `Due in ${hours}h`, score: 90 };
+        }
+
+        // 3. DO NOW: Planned start date is passed
         if (planDiff <= 0) {
             return { level: 'DO_NOW', label: 'Do Now', score: 80 };
         }
 
-        // 3. DO NOW (Proximity): Deadline is very close (e.g. tomorrow) even if plan is later?
-        // Actually, let's stick to the plan. But if deadline is < 3 days away, bump it.
+        // 4. DO NOW (Proximity): Deadline is < 3 days away
         if (deadlineDiff <= 3) {
-            return { level: 'DO_NOW', label: `Due in ${deadlineDiff}d`, score: 70 };
+            const days = Math.ceil(deadlineDiff);
+            return { level: 'DO_NOW', label: `Due in ${days}d`, score: 70 };
         }
 
-        // 4. CHILL
+        // 5. CHILL
         return { level: 'CHILL', label: 'On Track', score: 10 };
     }
 }

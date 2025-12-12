@@ -5,12 +5,14 @@ export interface ProjectTemplateStep {
     name: string;
     lead_days: number;
     context: string;
+    time?: string;
 }
 
 export interface ProjectConfig {
     projectName: string;
-    deadline: string; // YYYY-MM-DD
+    deadline: string;
     steps: ProjectTemplateStep[];
+    finalTaskName?: string;
 }
 
 export class ProjectService {
@@ -21,7 +23,7 @@ export class ProjectService {
     }
 
     async createProject(config: ProjectConfig) {
-        const { projectName, deadline, steps } = config;
+        const { projectName, deadline, steps, finalTaskName } = config;
         let currentDeadline: DateTime = DateTime.fromISO(deadline);
 
         if (!currentDeadline.isValid) {
@@ -29,8 +31,6 @@ export class ProjectService {
             return;
         }
 
-        // 1. Create Project Folder
-        // We'll put everything in "Kaizen Projects/ProjectName" to keep it tidy
         const rootFolder = "Kaizen Projects";
         if (!this.app.vault.getAbstractFileByPath(rootFolder)) {
             await this.app.vault.createFolder(rootFolder);
@@ -43,24 +43,31 @@ export class ProjectService {
 
         const filesCreated: TFile[] = [];
 
-        // Iterate backwards through steps
-        // The last step in the array is the "Final" step usually, or we assume the array is ordered Start -> Finish.
-        // If the array is [Scripting, Filming, Editing], then Editing happens LAST.
-        // So we process in REVERSE order.
+        const finalStep: ProjectTemplateStep = {
+            name: finalTaskName || "Submission",
+            lead_days: 0,
+            context: "Submission"
+        };
+        const allSteps = [...steps, finalStep];
 
-        const reverseSteps = [...steps].reverse();
+        const reverseSteps = [...allSteps].reverse();
 
         for (const step of reverseSteps) {
-            // Task Deadline = currentDeadline
-            // Task Start = currentDeadline - lead_days
-            const taskDeadline: DateTime = currentDeadline;
+
+            let taskDeadline: DateTime = currentDeadline;
+
+            if (step.time) {
+                const [targetHour, targetMinute] = step.time.split(':').map(Number);
+                if (!isNaN(targetHour) && !isNaN(targetMinute)) {
+                    taskDeadline = taskDeadline.set({ hour: targetHour, minute: targetMinute, second: 0, millisecond: 0 });
+                }
+            }
+
             const taskStart: DateTime = taskDeadline.minus({ days: step.lead_days });
 
-            // Format dates
-            const deadlineStr = taskDeadline.toISODate();
-            const planStr = taskStart.toISODate();
+            const deadlineStr = taskDeadline.toISO();
+            const planStr = taskStart.toISO();
 
-            // Create Content
             const filename = `${projectFolder}/${step.name}.md`;
             const content = `---
 type: "task"
@@ -80,14 +87,9 @@ Tasks:
 `;
 
             try {
-                // Check if file exists, if so, append 1, 2 etc? Or just fail?
-                // For now, let's just try to create.
-                // Assuming root for now, or user configured folder.
                 const file = await this.app.vault.create(filename, content);
                 filesCreated.push(file);
 
-                // Update currentDeadline for the NEXT step (which is the PREVIOUS logical step)
-                // The PREVIOUS step must finish by the START of THIS step.
                 currentDeadline = taskStart;
 
             } catch (e) {

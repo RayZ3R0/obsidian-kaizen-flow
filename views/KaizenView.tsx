@@ -17,6 +17,46 @@ interface TaskItem {
     urgency: UrgencyStatus;
 }
 
+const Countdown = ({ target }: { target: string | null }) => {
+    const [diff, setDiff] = React.useState<number | null>(null);
+
+    React.useEffect(() => {
+        if (!target) return;
+        const targetDate = DateTime.fromISO(target);
+        if (!targetDate.isValid) return;
+
+        const update = () => {
+            const now = DateTime.now();
+            const d = targetDate.diff(now, ['days', 'hours', 'minutes', 'seconds']);
+            setDiff(d.toMillis());
+        };
+
+        update();
+        const interval = setInterval(update, 1000);
+        return () => clearInterval(interval);
+    }, [target]);
+
+    if (!target || diff === null) return <span>--</span>;
+
+    const isPast = diff < 0;
+    const absMillis = Math.abs(diff);
+
+    // Manual formatting
+    const totalSeconds = Math.floor(absMillis / 1000);
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const text = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+
+    return (
+        <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            {isPast ? `-${text}` : text}
+        </span>
+    );
+};
+
 const KaizenDashboard = ({ app }: { app: any }) => {
     const [tasks, setTasks] = React.useState<TaskItem[]>([]);
     const [activeTab, setActiveTab] = React.useState<'sprint' | 'all'>('sprint');
@@ -46,7 +86,15 @@ const KaizenDashboard = ({ app }: { app: any }) => {
                 }
             });
 
-            loadedTasks.sort((a, b) => b.urgency.score - a.urgency.score);
+            loadedTasks.sort((a, b) => {
+                const scoreDiff = b.urgency.score - a.urgency.score;
+                if (scoreDiff !== 0) return scoreDiff;
+
+                // Secondary sort: Earliest Planned Date first
+                const dateA = a.planned_date || "";
+                const dateB = b.planned_date || "";
+                return dateA.localeCompare(dateB);
+            });
             setTasks(loadedTasks);
         }, 50);
     }, [app]);
@@ -88,10 +136,11 @@ const KaizenDashboard = ({ app }: { app: any }) => {
         }
     };
 
+
     const formatDate = (isoStr: string | null) => {
         if (!isoStr) return '';
         const d = DateTime.fromISO(isoStr);
-        return d.isValid ? d.toFormat('dd/MM/yyyy') : isoStr;
+        return d.isValid ? d.toFormat('d MMMM, HH:mm') : isoStr;
     };
 
     return (
@@ -138,10 +187,20 @@ const KaizenDashboard = ({ app }: { app: any }) => {
                             </div>
                             <div style={{ textAlign: 'right' }}>
                                 {!isDone && (
-                                    <div className="kaizen-urgency-badge" style={{ marginBottom: '4px' }}>{task.urgency.label}</div>
+                                    <div className="kaizen-urgency-badge" style={{ marginBottom: '4px' }}>
+                                        {/* Show Status Label AND Countdown if deadline exists */}
+                                        {task.deadline ? (
+                                            <>
+                                                {task.urgency.label} • <Countdown target={task.deadline} />
+                                            </>
+                                        ) : task.urgency.label}
+                                    </div>
                                 )}
                                 <div style={{ fontSize: '0.8em', opacity: 0.7 }}>
-                                    {formatDate(task.planned_date)}
+                                    Start: {formatDate(task.planned_date)}
+                                    {task.deadline && task.deadline !== task.planned_date && (
+                                        <> • Due: {formatDate(task.deadline)}</>
+                                    )}
                                 </div>
                             </div>
                         </div>

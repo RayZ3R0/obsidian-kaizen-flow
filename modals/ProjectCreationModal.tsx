@@ -7,8 +7,9 @@ import { DateTime } from 'luxon';
 
 const ModalContent = ({ app, onClose }: { app: App; onClose: () => void }) => {
     const [projectName, setProjectName] = React.useState("");
-    // Default to +2 days
-    const [deadline, setDeadline] = React.useState(DateTime.now().plus({ days: 2 }).toISODate() || "");
+    const [finalTaskName, setFinalTaskName] = React.useState("Submission");
+    // Default to +2 days, with time. Input type='datetime-local' requires YYYY-MM-DDTHH:mm
+    const [deadline, setDeadline] = React.useState(DateTime.now().plus({ days: 2 }).toFormat("yyyy-MM-dd'T'HH:mm"));
     // Start with 1 default step
     const [steps, setSteps] = React.useState<ProjectTemplateStep[]>([
         { name: "Step 1", lead_days: 1, context: "General" }
@@ -22,8 +23,9 @@ const ModalContent = ({ app, onClose }: { app: App; onClose: () => void }) => {
         const service = new ProjectService(app);
         await service.createProject({
             projectName,
-            deadline, // Input type='date' provides YYYY-MM-DD automatically
-            steps
+            deadline, // This is now a full ISO-like string from datetime-local
+            steps,
+            finalTaskName
         });
         onClose();
     };
@@ -57,14 +59,21 @@ const ModalContent = ({ app, onClose }: { app: App; onClose: () => void }) => {
             <div className="setting-item">
                 <div className="setting-item-info">
                     <div className="setting-item-name">Deadline</div>
-                    <div className="setting-item-description">MM/DD/YYYY</div>
+                    <div className="setting-item-description">MM/DD/YYYY HH:MM</div>
                 </div>
                 <div className="setting-item-control">
                     <input
-                        type="date"
+                        type="datetime-local"
                         value={deadline}
                         onChange={(e) => setDeadline(e.target.value)}
                     />
+                </div>
+            </div>
+
+            <div className="setting-item">
+                <div className="setting-item-info">Final Task Name</div>
+                <div className="setting-item-control">
+                    <input type="text" value={finalTaskName} onChange={(e) => setFinalTaskName(e.target.value)} placeholder="Submission" />
                 </div>
             </div>
 
